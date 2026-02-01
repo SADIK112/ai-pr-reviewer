@@ -3,7 +3,7 @@ import crypto from "crypto";
 import prisma from "@/lib/db/prisma";
 import { PullRequestWebhookPayload, PingWebhookPayload, WebhookContext, ReviewableAction, REVIEWABLE_ACTIONS, SUPPORTED_EVENTS } from "@/types";
 import { createOctokitClient } from "@/lib/github/octokit";
-import { fetchPRData } from "@/lib/github/pr-fetcher";
+import { fetchPRData, getLanguageFromFilename } from "@/lib/github/pr-fetcher";
 import { analyzePatterns } from "@/lib/analysis/pattern-matcher";
 import { cleanLLMSuggestions, prepareLLMRequest } from "@/lib/ai/llm-helpers";
 import { reviewWithLangChain } from "@/lib/ai/langchain";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/analysis/reviewer";
 import { postReviewComment } from "@/lib/github/comment-poster";
 import { SuggestionSeverity, SuggestionType } from "@/prisma/generated/enums";
+import { storeSuggestionEmbeddingsBatch } from "@/lib/vector/store";
 
 /**
  * Verify Github webhook signature
@@ -93,6 +94,7 @@ export async function POST(req: NextRequest) {
         // Parse payload early for repository ID
         const parsedPayload = parsePayload(context.payload);
         const result = parsedPayload as any;
+        console.log({ parsedPayload })
 
         // Fetch repository data
         const repoData = await prisma.repository.findUnique({
@@ -287,13 +289,19 @@ const triggerReviewProcess = async (
             ...patternResults.suggestions,
             ...llmResults.suggestions
         ];
-        
+
         const uniqueSuggestions = deduplicateSuggestions(allSuggestions);
         const validSuggestions = cleanLLMSuggestions(uniqueSuggestions);
         const prioritizedSuggestions = prioritizeSuggestions(validSuggestions);
         console.log({ prioritizedSuggestions })
         console.log(`[Reviewer] Final suggestions: ${prioritizedSuggestions.length} (from ${allSuggestions.length} total)`);
-
+        // Store embedding in vector database
+        await storeSuggestionEmbeddingsBatch(
+            userId,
+            pr.number,
+            pr.id.toString(),
+            prioritizedSuggestions
+        )
         // Step 4: Calculate metrics and generate summary
         const complexity = calculateComplexityScore(prData, prioritizedSuggestions);
         const summary = generateReviewSummary(prData, prioritizedSuggestions, complexity);

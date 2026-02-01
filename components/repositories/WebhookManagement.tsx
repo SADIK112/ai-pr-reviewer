@@ -37,8 +37,14 @@ interface WebhookFormData {
 }
 
 const DEFAULT_WEBHOOK_URL = 'https://your-webhook-endpoint.com/api/webhook';
-const DEFAULT_EVENTS = ['push', 'pull_request'];
-const AVAILABLE_EVENTS = ['push', 'pull_request', 'issues', 'issue_comment'];
+const DEFAULT_EVENTS = ['pull_request', 'pull_request_review_comment', 'pull_request_review',];
+const AVAILABLE_EVENTS = [
+  "pull_request",
+  "pull_request_review",
+  "pull_request_review_comment",
+  "pull_request_review_thread",
+  "push"
+];
 
 function generateRandomSecret(length = 32): string {
   return crypto.randomBytes(length).toString("hex");

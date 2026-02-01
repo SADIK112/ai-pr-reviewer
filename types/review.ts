@@ -14,6 +14,11 @@ export type SuggestionType =
     | 'MAINTAINABILITY'
     | 'DOCUMENTATION';
 
+export enum SuggestionReviewState {
+    ACCEPTED = 'ACCEPTED',
+    REJECTED = 'REJECTED',
+    UNDER_REVIEW = 'UNDER_REVIEW',
+}
 export interface Suggestion {
     id?: string;
     type: SuggestionType;
@@ -25,6 +30,7 @@ export interface Suggestion {
     lineEnd?: number;
     codeSnippet?: string;
     suggestedCode?: string;
+    state?: SuggestionReviewState;
 }
 
 export interface PatternRule {

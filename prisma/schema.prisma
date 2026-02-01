@@ -38,6 +38,12 @@ enum SuggestionType {
   DOCUMENTATION
 }
 
+enum SuggestionState {
+  ACCEPTED
+  REJECTED
+  UNDER_REVIEW
+}
+
 model Repository {
   id            String        @id @default(cuid())
   repoId        String        @unique
@@ -124,6 +130,7 @@ model Suggestion {
   lineEnd       Int?
   codeSnippet   String?            @db.Text
   suggestedCode String?            @db.Text
+  state         SuggestionState    @default(UNDER_REVIEW)
   reviewId      String
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt

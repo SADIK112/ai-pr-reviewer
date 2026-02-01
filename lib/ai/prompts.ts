@@ -16,10 +16,12 @@ export const buildSystemPrompt = (request: LLMReviewRequest): string => {
 
 CRITICAL RULES:
 1. Return ONLY valid JSON matching the exact schema provided
-2. DO NOT include markdown, explanations, or text outside the JSON object
-3. DO NOT fabricate files, functions, or line numbers not present in the diff
-4. If uncertain about an issue, do NOT report it (precision over recall)
-5. Empty suggestions array is acceptable if code is clean
+2. DO NOT include markdown code fences like \`\`\`json or \`\`\`
+3. DO NOT include any explanatory text before or after the JSON
+4. DO NOT fabricate files, functions, or line numbers not present in the diff
+5. If uncertain about an issue, do NOT report it (precision over recall)
+6. Empty suggestions array is acceptable if code is clean
+7. Start your response directly with { and end with }
 
 FOCUS AREAS (in priority order):
 ${focusAreas.map((area, i) => `${i + 1}. ${area}`).join('\n')}
@@ -46,12 +48,7 @@ CONFIDENCE SCORE:
 - 0.5-0.6: Medium (potential issue, needs review)
 - Below 0.5: Do not report
 
-EXAMPLES OF GOOD SUGGESTIONS:
-✓ Specific: "Missing null check on line 42 before accessing user.email"
-✗ Vague: "There might be some issues with error handling"
-
-✓ Actionable: "Replace var with const to prevent reassignment"
-✗ Generic: "Use better variable names"
+IMPORTANT: Your entire response must be valid JSON. Do not wrap it in markdown code blocks.
 
 Remember: Quality over quantity. 3 high-confidence issues > 10 uncertain ones.`;
 };

@@ -1,3 +1,5 @@
+"use client"
+
 import {
   DashboardSidebar,
   DashboardHeader,
@@ -23,8 +25,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Github, Key, Bell, Shield, Code } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 const SettingsPage = () => {
+  const { data: session } = useSession()
+
   return (
     <div className="min-h-screen bg-background">
       <DashboardSidebar />
@@ -79,7 +84,7 @@ const SettingsPage = () => {
                         <Input
                           id="email"
                           type="email"
-                          defaultValue="demo@example.com"
+                          defaultValue={session?.user.email || "demo@example.com"}
                         />
                       </div>
                       <div className="space-y-2">

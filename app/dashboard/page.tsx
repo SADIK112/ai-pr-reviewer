@@ -1,3 +1,5 @@
+"use client"
+
 import {
   DashboardSidebar,
   DashboardHeader,
@@ -6,83 +8,172 @@ import {
   StatsCard,
   RecentReviews,
   IssueDistribution,
-  Review,
 } from "@/components/dashboard/DashboardComponents";
-import { GitPullRequest, Check, AlertTriangle, Clock } from "lucide-react";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { redirect, RedirectType } from "next/navigation";
+import { GitPullRequest, Check, AlertTriangle, Clock, RefreshCw } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useDashboard } from "@/hooks/useDashboard";
 
-// Mock data for demonstration
-const mockReviews: Review[] = [
-  {
-    id: "1",
-    prNumber: 142,
-    title: "Add user authentication with OAuth",
-    repository: "acme/web-app",
-    status: "completed",
-    suggestionsCount: 8,
-    acceptedCount: 6,
-    complexity: "high",
-    createdAt: "2 hours ago",
-  },
-  {
-    id: "2",
-    prNumber: 139,
-    title: "Fix responsive layout issues",
-    repository: "acme/web-app",
-    status: "completed",
-    suggestionsCount: 3,
-    acceptedCount: 3,
-    complexity: "low",
-    createdAt: "5 hours ago",
-  },
-  {
-    id: "3",
-    prNumber: 137,
-    title: "Implement payment processing",
-    repository: "acme/api-server",
-    status: "pending",
-    suggestionsCount: 12,
-    acceptedCount: 4,
-    complexity: "high",
-    createdAt: "1 day ago",
-  },
-  {
-    id: "4",
-    prNumber: 135,
-    title: "Update dependencies",
-    repository: "acme/web-app",
-    status: "completed",
-    suggestionsCount: 2,
-    acceptedCount: 2,
-    complexity: "low",
-    createdAt: "2 days ago",
-  },
-  {
-    id: "5",
-    prNumber: 133,
-    title: "Add unit tests for utils",
-    repository: "acme/api-server",
-    status: "completed",
-    suggestionsCount: 5,
-    acceptedCount: 4,
-    complexity: "medium",
-    createdAt: "3 days ago",
-  },
-];
+interface ReviewTimelineItem {
+  date: string; count: number; suggestions: number
+}
 
-const issueData = [
-  { name: "Security Issues", count: 23, color: "hsl(0, 72%, 55%)" },
-  { name: "Code Quality", count: 45, color: "hsl(38, 92%, 50%)" },
-  { name: "Performance", count: 18, color: "hsl(190, 95%, 55%)" },
-  { name: "Best Practices", count: 67, color: "hsl(142, 71%, 45%)" },
-];
+function getAvgSuggestions(timeline: ReviewTimelineItem[]): number {
+  if (timeline.length === 0) return 0;
 
-const Dashboard = async () => {
-  const session = await getServerSession(authOptions);
-  console.log({ session })
-  if (!session) return redirect("/login", RedirectType.push)
+  const total = timeline.reduce(
+    (sum, day) => sum + day.count,
+    0
+  );
+
+  return Math.round(total / timeline.length);
+}
+
+
+function StatsCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-4 rounded" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="mb-2 h-8 w-16" />
+        <Skeleton className="h-3 w-32" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function RecentReviewsSkeleton() {
+  return (
+    <Card className="lg:col-span-2">
+      <CardHeader>
+        <Skeleton className="h-6 w-32" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div
+            key={i}
+            className="flex items-center justify-between border-b border-border/50 pb-4 last:border-0"
+          >
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-3 w-32" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function IssueDistributionSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-36" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="space-y-2">
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-8" />
+            </div>
+            <Skeleton className="h-2 w-full rounded-full" />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function DashboardError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <Alert variant="destructive" className="mx-auto max-w-2xl">
+      <AlertTriangle className="h-4 w-4" />
+      <AlertTitle>Failed to load dashboard data</AlertTitle>
+      <AlertDescription className="mt-2">
+        <p className="mb-4">
+          We couldn't fetch your dashboard data. Please check your connection and try again.
+        </p>
+        <Button variant="outline" size="sm" onClick={onRetry} className="gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Retry
+        </Button>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+function DashboardLoading() {
+  return (
+    <>
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => <StatsCardSkeleton key={i} />)}
+      </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <RecentReviewsSkeleton />
+        <IssueDistributionSkeleton />
+      </div>
+    </>
+  );
+}
+
+export default function Dashboard() {
+  const { data, timeline, loading, error, refresh } = useDashboard();
+
+  if (loading && !data) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardSidebar />
+        <div className="pl-64 transition-all duration-300">
+          <DashboardHeader title="Dashboard" />
+          <main className="p-6">
+            <DashboardLoading />
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardSidebar />
+        <div className="pl-64 transition-all duration-300">
+          <DashboardHeader title="Dashboard" />
+          <main className="p-6">
+            <DashboardError onRetry={refresh} />
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardSidebar />
+        <div className="pl-64 transition-all duration-300">
+          <DashboardHeader title="Dashboard" />
+          <main className="p-6">
+            <div className="text-center py-12 text-muted-foreground">
+              No dashboard data available
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  const { summary } = data;
+  console.log(summary)
+  console.log(timeline)
 
   return (
     <div className="min-h-screen bg-background">
@@ -96,47 +187,63 @@ const Dashboard = async () => {
           <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatsCard
               title="PRs Reviewed"
-              value="127"
-              change="12 this week"
+              value={summary.stats?.prsReviewed?.total.toLocaleString()}
+              change={`+${summary.stats?.prsReviewed?.thisWeek} this week`}
               changeType="positive"
               icon={GitPullRequest}
             />
+
             <StatsCard
               title="Suggestions Accepted"
-              value="73%"
-              change="+5% from last month"
-              changeType="positive"
+              value={`${Math.round(summary?.stats?.suggestionAccepted?.rate)}%`}
+              change={`${summary?.stats?.suggestionAccepted?.change >= 0 ? "+" : ""}${summary?.stats?.suggestionAccepted?.change}%`}
+              changeType={summary?.stats?.suggestionAccepted?.change >= 0 ? "positive" : "negative"}
               icon={Check}
             />
+
             <StatsCard
               title="Issues Detected"
-              value="153"
-              change="23 critical"
-              changeType="negative"
+              value={summary?.stats?.issuesDetected?.total.toLocaleString()}
+              change={summary?.stats?.issuesDetected?.critical > 0 ? `${summary?.stats?.issuesDetected?.critical} critical` : ""}
+              changeType={summary?.stats?.issuesDetected?.critical > 0 ? "negative" : "neutral"}
               icon={AlertTriangle}
             />
+
             <StatsCard
               title="Avg Review Time"
-              value="24s"
-              change="2.3x faster than manual"
+              value={getAvgSuggestions(timeline)}
+              change="AI-powered"
               changeType="positive"
               icon={Clock}
             />
           </div>
 
-          {/* Charts and Recent Reviews */}
+          {/* Recent Reviews + Issue Distribution */}
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <RecentReviews reviews={mockReviews} />
+              {summary?.recentReviews && summary?.recentReviews.length && (
+                <RecentReviews reviews={summary.recentReviews} />
+              )}
             </div>
+
             <div>
-              <IssueDistribution items={issueData} />
+              {summary?.issueDistribution && summary?.issueDistribution.length && (
+                <IssueDistribution
+                  items={summary?.issueDistribution.map((item) => ({
+                    name: item.type,
+                    count: item.count,
+                    color:
+                      item.type.toLowerCase().includes("security") ? "hsl(0, 72%, 55%)" :
+                        item.type.toLowerCase().includes("quality") ? "hsl(38, 92%, 50%)" :
+                          item.type.toLowerCase().includes("performance") ? "hsl(190, 95%, 55%)" :
+                            "hsl(142, 71%, 45%)",
+                  }))}
+                />
+              )}
             </div>
           </div>
         </main>
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}

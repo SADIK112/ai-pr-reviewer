@@ -1,26 +1,23 @@
 import { OpenAI } from "openai";
 
-const LLM_API_URL = process.env.LLM_API_URL;
+// const LLM_API_URL = process.env.LLM_API_URL;
 const LLM_API_KEY = process.env.LLM_API_KEY;
 const MODEL = process.env.LLM_MODEL_NAME || 'openai/gpt-oss-120b:groq';
 const MAX_TOKENS = process.env.LLM_MAX_TOKEN || 4096;
 const TEMPERATURE = process.env.LLM_TEMPERATURE || 0.4;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 /**
  * Initialize OpenAI client
  */
 export const getOpenAIClient = (): OpenAI => {
-    if (!LLM_API_URL) {
-        throw new Error('HF_API_URL is not defined in environment variables');
+    if (!OPENAI_API_KEY) {
+        throw new Error('OPENAI_API_KEY is not defined in environment variables');
     }
-    if (!LLM_API_KEY) {
-        throw new Error('HF_API_KEY is not defined in environment variables');
-    }
-
-    return new OpenAI({
-        baseURL: process.env.HF_API_URL,
-        apiKey: process.env.ANTHROPIC_API_KEY,
-    });
+    console.log({
+        OPENAI_API_KEY
+    })
+    return new OpenAI({ apiKey: OPENAI_API_KEY });
 }
 
 /**

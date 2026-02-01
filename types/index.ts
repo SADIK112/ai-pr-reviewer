@@ -35,3 +35,7 @@ export type {
     LLMReviewResponse,
     Review
 } from "./review";
+
+export {
+    SuggestionReviewState
+} from "./review";

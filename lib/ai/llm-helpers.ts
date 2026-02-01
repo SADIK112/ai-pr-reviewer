@@ -1,4 +1,4 @@
-import type { PRData, LLMReviewRequest, Suggestion } from "@/types";
+import { type PRData, type LLMReviewRequest, type Suggestion, SuggestionReviewState } from "@/types";
 import { getLanguageFromFilename } from "../github/pr-fetcher";
 import { formatDiff } from "../utils/diff-parser";
 
@@ -139,6 +139,7 @@ export const cleanLLMSuggestions = (suggestions: Suggestion[]): Suggestion[] => 
         lineEnd: s.lineEnd,
         codeSnippet: s.codeSnippet || '',
         suggestedCode: s.suggestedCode || '',
+        state: SuggestionReviewState.UNDER_REVIEW,
     }))
 }
 

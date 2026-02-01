@@ -52,11 +52,13 @@ export interface Review {
   prNumber: number;
   title: string;
   repository: string;
-  status: "completed" | "pending" | "failed";
-  suggestionsCount: number;
-  acceptedCount: number;
-  complexity: "low" | "medium" | "high";
   createdAt: string;
+  acceptedCount: number;
+  totalCount: number;
+  acceptanceRate: number;
+  severity: "low" | "medium" | "high" | "critical";
+  status: "open" | "closed" | "merged";
+  url: string;
 }
 
 interface RecentReviewsProps {
@@ -65,15 +67,16 @@ interface RecentReviewsProps {
 
 export function RecentReviews({ reviews }: RecentReviewsProps) {
   const statusVariant = {
-    completed: "success" as const,
-    pending: "warning" as const,
-    failed: "critical" as const,
+    closed: "success" as const,
+    open: "warning" as const,
+    merged: "critical" as const,
   };
 
   const complexityVariant = {
     low: "success" as const,
     medium: "warning" as const,
     high: "critical" as const,
+    critical: "critical" as const,
   };
 
   return (
@@ -103,12 +106,12 @@ export function RecentReviews({ reviews }: RecentReviewsProps) {
               <div className="ml-4 flex items-center gap-3">
                 <div className="hidden text-right sm:block">
                   <p className="text-sm">
-                    {review.acceptedCount}/{review.suggestionsCount}
+                    {review.acceptedCount}/{review.totalCount}
                   </p>
                   <p className="text-xs text-muted-foreground">accepted</p>
                 </div>
-                <Badge variant={complexityVariant[review.complexity]}>
-                  {review.complexity}
+                <Badge variant={complexityVariant[review.severity]}>
+                  {review.severity}
                 </Badge>
                 <Badge variant={statusVariant[review.status]}>
                   {review.status}

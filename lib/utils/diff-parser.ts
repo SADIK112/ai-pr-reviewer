@@ -191,8 +191,7 @@ export const getLineFromDiff = (
 ): DiffLine | null => {
     for (const hunk of diff.hunks) {
         const line = hunk.lines.find(
-            l => l.lineNumber === lineNumber || 
-            l.newLineNumber === lineNumber
+            l => l.lineNumber === lineNumber || l.newLineNumber === lineNumber
         );
         if (line) return line;
     }
