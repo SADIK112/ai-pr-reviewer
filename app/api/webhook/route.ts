@@ -14,7 +14,7 @@ import {
     prioritizeSuggestions
 } from "@/lib/analysis/reviewer";
 import { postReviewComment } from "@/lib/github/comment-poster";
-import { SuggestionSeverity, SuggestionType } from "@/prisma/generated/enums";
+import { SuggestionSeverity, SuggestionType } from "@/lib/generated/prisma/enums";
 import { storeSuggestionEmbeddingsBatch } from "@/lib/vector/store";
 
 /**
