@@ -220,7 +220,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 // Test webhook connection
 export async function PATCH(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
@@ -232,10 +232,12 @@ export async function PATCH(
             );
         }
 
+        const { id } = await params;
+
         // Find repository
         const repository = await prisma.repository.findFirst({
             where: {
-                repoId: params.id,
+                repoId: id,
                 userId: session.user.id,
             },
         });

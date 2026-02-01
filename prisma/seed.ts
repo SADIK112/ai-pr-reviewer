@@ -1,4 +1,4 @@
-import { prisma } from "../lib/db/prisma";
+import prisma from "../lib/db/prisma";
 
 async function main() {
     const user = await prisma.user.create({
